@@ -221,10 +221,12 @@ bool CompilerStack::analyze()
 
 					// Note that we now reference contracts by their fully qualified names, and
 					// thus contracts can only conflict if declared in the same source file.  This
-					// already causes a double-declaration error elsewhere, so we do not report
-					// an error here and instead silently drop any additional contracts we find.
-					if (m_contracts.find(contract->fullyQualifiedName()) == m_contracts.end())
-						m_contracts[contract->fullyQualifiedName()].contract = contract;
+					// should already cause a double-declaration error elsewhere.
+					solAssert(
+						m_contracts.find(contract->fullyQualifiedName()) == m_contracts.end(),
+						"Contract already present - name clash?"
+					);
+					m_contracts[contract->fullyQualifiedName()].contract = contract;
 				}
 
 		// Next, we check inheritance, overrides, function collisions and other things at
