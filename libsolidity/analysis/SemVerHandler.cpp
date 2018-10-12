@@ -98,6 +98,7 @@ bool SemVerMatchExpression::MatchComponent::matches(SemVerVersion const& _versio
 	{
 		int cmp = 0;
 		bool didCompare = false;
+		const_cast<SemVerMatchExpression::MatchComponent*>(this)->levelsPresent = 3; // XXX
 		for (unsigned i = 0; i < levelsPresent && cmp == 0; i++)
 			if (version.numbers[i] != unsigned(-1))
 			{
