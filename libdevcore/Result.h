@@ -39,7 +39,9 @@ public:
 	Result(T _value, std::string _err): m_value(std::move(_value)), m_err(std::move(_err)) {}
 
 	/// @returns the value this result currently holds.
-	operator T() { return m_value; }
+//	operator T&() { return m_value; }
+	/// @returns the value this result currently holds.
+	operator T const&() { return m_value; }
 	/// @returns the error message (can be empty).
 	std::string const& error() const { return m_err; }
 
