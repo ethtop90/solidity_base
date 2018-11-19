@@ -31,23 +31,51 @@ namespace dev {
 ///		return true;
 /// }
 ///
-template <class T>
+///	A result can also be instantiated using one of the factory methods it provides:
+///
+/// using BoolResult = Result<bool>;
+/// BoolResult check()
+/// {
+///		if (false)
+///			return BoolResult::failure("Error message");
+///		return BoolResult::success(true);
+/// }
+///
+template <class Type>
 class Result
-{
+{	
 public:
-	Result(T _value): m_value(std::move(_value)) {}
-	Result(T _value, std::string _err): m_value(std::move(_value)), m_err(std::move(_err)) {}
+	using Error = std::string;
 
-	/// @returns the value this result currently holds.
-//	operator T&() { return m_value; }
-	/// @returns the value this result currently holds.
-	operator T const&() { return m_value; }
+	/// @{
+	/// @name Factory functions
+	/// Factory functions that provide a verbose way to create a result
+	static Result<Type> success(Type _value) { return Result(_value); }
+	static Result<Type> failure(Error _error) { return Result(_error); }
+	/// @}
+
+	Result(Type _value): m_value(std::move(_value)) {}
+	Result(Error _error): m_error(std::move(_error)) {}
+	Result(Type _value, Error _error): m_value(std::move(_value)), m_error(std::move(_error)) {}
+
+	/// @{
+	/// @name Wrapper functions
+	/// Wrapper functions that provide implicit conversions to and explicit retrieval of
+	/// the value this result holds.
+	operator Type const&() const { return m_value; }
+	Type& operator*() const { return m_value; }
+	Type const& get() const { return m_value; }
+	Type& get() { return m_value; }
+	/// @}
+
 	/// @returns the error message (can be empty).
-	std::string const& error() const { return m_err; }
+	std::string const& error() const { return m_error; }
 
-private:
-	T m_value;
-	std::string m_err;
+	/// @{
+	/// Members are public in order to support structured bindings (starting with C++17)
+	Type m_value;
+	std::string m_error = Error();
+	/// @}
 };
 
 }
