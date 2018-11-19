@@ -41,43 +41,42 @@ namespace dev {
 ///		return BoolResult::success(true);
 /// }
 ///
-template <class Type>
-class Result
-{	
-public:
-	using Error = std::string;
+///
+struct ResultError { std::string reason; };
 
+template <class ResultType>
+struct Result
+{
 	/// @{
 	/// @name Factory functions
 	/// Factory functions that provide a verbose way to create a result
-	static Result<Type> success(Type _value) { return Result(_value); }
-	static Result<Type> failure(Error _error) { return Result(_error); }
+	static Result<ResultType> success(ResultType _value) { return Result(_value); }
+	static Result<ResultType> failure(ResultError _error) { return Result(_error.reason); }
 	/// @}
 
-	Result(Type _value): m_value(std::move(_value)) {}
-	Result(Error _error): m_error(std::move(_error)) {}
-	Result(Type _value, Error _error): m_value(std::move(_value)), m_error(std::move(_error)) {}
+	Result(ResultType _value): value(std::move(_value)) {}
+	Result(ResultError _error): error(std::move(_error.reason)) {}
+	Result(ResultType _value, ResultError _error): value(std::move(_value)), error(std::move(_error.reason)) {}
 
 	/// @{
 	/// @name Wrapper functions
 	/// Wrapper functions that provide implicit conversions to and explicit retrieval of
 	/// the value this result holds.
-	operator Type const&() const { return m_value; }
-	Type& operator*() const { return m_value; }
-	Type const& get() const { return m_value; }
-	Type& get() { return m_value; }
+	/// If the result is an error, accessing the value results in undefined behaviour.
+	operator ResultType const&() const { return value; }
+	ResultType& operator*() const { return value; }
+	ResultType const& get() const { return value; }
+	ResultType& get() { return value; }
 	/// @}
 
 	/// @returns the error message (can be empty).
-	std::string const& error() const { return m_error; }
+	std::string const& reason() const { return error; }
 
 	/// @{
 	/// Members are public in order to support structured bindings (starting with C++17)
-	Type m_value;
-	std::string m_error = Error();
+	ResultType value;
+	std::string error;
 	/// @}
 };
 
 }
-
-
