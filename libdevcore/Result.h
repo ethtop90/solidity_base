@@ -50,8 +50,9 @@ struct Result
 	/// @{
 	/// @name Factory functions
 	/// Factory functions that provide a verbose way to create a result
-	static Result<ResultType> success(ResultType _value) { return Result(_value); }
-	static Result<ResultType> failure(ResultError _error) { return Result(_error.reason); }
+	static Result<ResultType> Ok(ResultType _value) { return Result(_value); }
+	static Result<ResultType> Err() { return Result(ResultError{std::string()}); }
+	static Result<ResultType> Err(std::string _error) { return Result(ResultError{std::move(_error)}); }
 	/// @}
 
 	Result(ResultType _value): value(std::move(_value)) {}
@@ -70,10 +71,9 @@ struct Result
 	/// @}
 
 	/// @returns the error message (can be empty).
-	std::string const& reason() const { return error; }
+	std::string const& err() const { return error; }
 
-	/// @{
-	/// Members are public in order to support structured bindings (starting with C++17)
+private:
 	ResultType value;
 	std::string error;
 	/// @}
