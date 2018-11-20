@@ -57,7 +57,20 @@ struct Result
 
 	Result(ResultType _value): value(std::move(_value)) {}
 	Result(ResultError _error): error(std::move(_error.reason)) {}
-	Result(ResultType _value, ResultError _error): value(std::move(_value)), error(std::move(_error.reason)) {}
+
+	Result(ResultType _value, ResultError _error):
+		value(std::move(_value)),
+		error(std::move(_error.reason))
+	{}
+
+	template <typename U>
+	Result(Result<U> other):
+		value(std::move(other.get())),
+		error(std::move(other.err()))
+	{}
+
+	template <typename T>
+	Result(ResultError error): error{std::move(error.reason)} {}
 
 	/// @{
 	/// @name Wrapper functions
@@ -76,7 +89,9 @@ struct Result
 private:
 	ResultType value;
 	std::string error;
-	/// @}
 };
+
+template <typename T> Result<T> Success(T value) { return Result<T>{value}; }
+template <typename T> Result<T> Failure(std::string error) { return Result<T>{error}; }
 
 }
