@@ -472,6 +472,12 @@ String literals are written with either double or single-quotes (``"foo"`` or ``
 
 For example, with ``bytes32 samevar = "stringliteral"`` the string literal is interpreted in its raw byte form when assigned to a ``bytes32`` type.
 
+.. note::
+
+  While it is not possible to directly compare two string literals, you can use
+  this implicit conversion to compare two strings converted to ``bytes`` types,
+  for example ``keccak256(abi.encode(s1)) == keccak256(abi.encode(s2))``
+
 String literals support the following escape characters:
 
  - ``\<newline>`` (escapes an actual newline)
