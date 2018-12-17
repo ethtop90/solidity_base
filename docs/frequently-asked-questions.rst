@@ -21,30 +21,6 @@ How do structs work?
 
 See `struct_and_for_loop_tester.sol <https://github.com/fivedogit/solidity-baby-steps/blob/master/contracts/65_struct_and_for_loop_tester.sol>`_.
 
-What are some examples of basic string manipulation (``substring``, ``indexOf``, ``charAt``, etc)?
-==================================================================================================
-
-There are some string utility functions at `stringUtils.sol <https://github.com/ethereum/dapp-bin/blob/master/library/stringUtils.sol>`_
-which will be extended in the future. In addition, Arachnid has written `solidity-stringutils <https://github.com/Arachnid/solidity-stringutils>`_.
-
-For now, if you want to modify a string (even when you only want to know its length),
-you should always convert it to a ``bytes`` first::
-
-    pragma solidity >=0.4.0 <0.6.0;
-
-    contract C {
-        string s;
-
-        function append(byte c) public {
-            bytes(s).push(c);
-        }
-
-        function set(uint i, byte c) public {
-            bytes(s)[i] = c;
-        }
-    }
-
-
 Can I concatenate two strings?
 ==============================
 

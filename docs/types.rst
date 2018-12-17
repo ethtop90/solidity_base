@@ -474,9 +474,9 @@ For example, with ``bytes32 samevar = "stringliteral"`` the string literal is in
 
 .. note::
 
-  While it is not possible to directly compare two string literals, you can use
-  this implicit conversion to compare two strings converted to ``bytes`` types,
-  for example ``keccak256(abi.encode(s1)) == keccak256(abi.encode(s2))``
+  While Solidity does not have string manipulation functions, you can use
+  this implicit conversion for equivalent functionality. For example to compare
+  two strings ``keccak256(abi.encode(s1)) == keccak256(abi.encode(s2))``
 
 String literals support the following escape characters:
 
