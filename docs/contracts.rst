@@ -523,6 +523,11 @@ Function parameters can be used as any other local variable and they can also be
   An :ref:`internal function<external-function-calls>` can accept a
   multi-dimensional array without enabling the feature.
 
+.. warning::
+
+  Functions can accept a maximum of **16** parameters, any more generate a
+  ``StackTooDeepException`` compiler error.
+
 .. index:: return array, return string, array, string, array of strings, dynamic array, variably sized array, return struct, struct
 
 Return Variables
