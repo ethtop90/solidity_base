@@ -12,206 +12,125 @@ variables. Calling a function on a different contract (instance) will perform
 an EVM function call and thus switch the context such that state variables are
 inaccessible.
 
-.. include:: contracts/creating-contracts.rst
+.. index:: ! contract;creation, constructor
 
-.. index:: ! visibility, external, public, private, internal
+******************
+Creating Contracts
+******************
 
-.. _visibility-and-getters:
+Contracts can be created "from outside" via Ethereum transactions or from within Solidity contracts.
 
-**********************
-Visibility and Getters
-**********************
+IDEs, such as `Remix <https://remix.ethereum.org/>`_, make the creation process seamless using UI elements.
 
-Since Solidity knows two kinds of function calls (internal
-ones that do not create an actual EVM call (also called
-a "message call") and external
-ones that do), there are four types of visibilities for
-functions and state variables.
+Creating contracts programmatically on Ethereum is best done via using the JavaScript API `web3.js <https://github.com/ethereum/web3.js>`_.
+It has a function called `web3.eth.Contract <https://web3js.readthedocs.io/en/1.0/web3-eth-contract.html#new-contract>`_
+to facilitate contract creation.
 
-Functions have to be specified as being ``external``,
-``public``, ``internal`` or ``private``.
-For state variables, ``external`` is not possible.
+When a contract is created, its constructor_  (a function declared with the ``constructor`` keyword) is executed once.
 
-``external``:
-    External functions are part of the contract interface,
-    which means they can be called from other contracts and
-    via transactions. An external function ``f`` cannot be called
-    internally (i.e. ``f()`` does not work, but ``this.f()`` works).
-    External functions are sometimes more efficient when
-    they receive large arrays of data.
+A constructor is optional. Only one constructor is allowed, which means
+overloading is not supported.
 
-``public``:
-    Public functions are part of the contract interface
-    and can be either called internally or via
-    messages. For public state variables, an automatic getter
-    function (see below) is generated.
+After the constructor has executed, the final code of the contract is deployed to the
+blockchain. This code includes all public and external functions and all functions
+that are reachable from there through function calls. The deployed code does not
+include the constructor code or internal functions only called from the constructor.
 
-``internal``:
-    Those functions and state variables can only be
-    accessed internally (i.e. from within the current contract
-    or contracts deriving from it), without using ``this``.
+.. index:: constructor;arguments
 
-``private``:
-    Private functions and state variables are only
-    visible for the contract they are defined in and not in
-    derived contracts.
+Internally, constructor arguments are passed :ref:`ABI encoded <ABI>` after the code of
+the contract itself, but you do not have to care about this if you use ``web3.js``.
 
-.. note::
-    Everything that is inside a contract is visible to
-    all observers external to the blockchain. Making something ``private``
-    only prevents other contracts from accessing and modifying
-    the information, but it will still be visible to the
-    whole world outside of the blockchain.
-
-The visibility specifier is given after the type for
-state variables and between parameter list and
-return parameter list for functions.
+If a contract wants to create another contract, the source code
+(and the binary) of the created contract has to be known to the creator.
+This means that cyclic creation dependencies are impossible.
 
 ::
 
-    pragma solidity >=0.4.16 <0.6.0;
+    pragma solidity >=0.4.22 <0.6.0;
 
-    contract C {
-        function f(uint a) private pure returns (uint b) { return a + 1; }
-        function setData(uint a) internal { data = a; }
-        uint public data;
-    }
+    contract OwnedToken {
+        // `TokenCreator` is a contract type that is defined below.
+        // It is fine to reference it as long as it is not used
+        // to create a new contract.
+        TokenCreator creator;
+        address owner;
+        bytes32 name;
 
-In the following example, ``D``, can call ``c.getData()`` to retrieve the value of
-``data`` in state storage, but is not able to call ``f``. Contract ``E`` is derived from
-``C`` and, thus, can call ``compute``.
+        // This is the constructor which registers the
+        // creator and the assigned name.
+        constructor(bytes32 _name) public {
+            // State variables are accessed via their name
+            // and not via e.g. `this.owner`. Functions can
+            // be accessed directly or through `this.f`,
+            // but the latter provides an external view
+            // to the function. Especially in the constructor,
+            // you should not access functions externally,
+            // because the function does not exist yet.
+            // See the next section for details.
+            owner = msg.sender;
 
-::
+            // We do an explicit type conversion from `address`
+            // to `TokenCreator` and assume that the type of
+            // the calling contract is `TokenCreator`, there is
+            // no real way to check that.
+            creator = TokenCreator(msg.sender);
+            name = _name;
+        }
 
-    pragma solidity >=0.4.0 <0.6.0;
+        function changeName(bytes32 newName) public {
+            // Only the creator can alter the name --
+            // the comparison is possible since contracts
+            // are explicitly convertible to addresses.
+            if (msg.sender == address(creator))
+                name = newName;
+        }
 
-    contract C {
-        uint private data;
+        function transfer(address newOwner) public {
+            // Only the current owner can transfer the token.
+            if (msg.sender != owner) return;
 
-        function f(uint a) private pure returns(uint b) { return a + 1; }
-        function setData(uint a) public { data = a; }
-        function getData() public view returns(uint) { return data; }
-        function compute(uint a, uint b) internal pure returns (uint) { return a + b; }
-    }
-
-    // This will not compile
-    contract D {
-        function readData() public {
-            C c = new C();
-            uint local = c.f(7); // error: member `f` is not visible
-            c.setData(3);
-            local = c.getData();
-            local = c.compute(3, 5); // error: member `compute` is not visible
+            // We ask the creator contract if the transfer
+            // should proceed by using a function of the
+            // `TokenCreator` contract defined below. If
+            // the call fails (e.g. due to out-of-gas),
+            // the execution also fails here.
+            if (creator.isTokenTransferOK(owner, newOwner))
+                owner = newOwner;
         }
     }
 
-    contract E is C {
-        function g() public {
-            C c = new C();
-            uint val = compute(3, 5); // access to internal member (from derived to parent contract)
+    contract TokenCreator {
+        function createToken(bytes32 name)
+           public
+           returns (OwnedToken tokenAddress)
+        {
+            // Create a new `Token` contract and return its address.
+            // From the JavaScript side, the return type is
+            // `address`, as this is the closest type available in
+            // the ABI.
+            return new OwnedToken(name);
+        }
+
+        function changeName(OwnedToken tokenAddress, bytes32 name) public {
+            // Again, the external type of `tokenAddress` is
+            // simply `address`.
+            tokenAddress.changeName(name);
+        }
+
+        // Perform checks to determine if transferring a token to the
+        // `OwnedToken` contract should proceed
+        function isTokenTransferOK(address currentOwner, address newOwner)
+            public
+            pure
+            returns (bool ok)
+        {
+            // Check an arbitrary condition to see if transfer should proceed
+            return keccak256(abi.encodePacked(currentOwner, newOwner))[0] == 0x7f;
         }
     }
 
-.. index:: ! getter;function, ! function;getter
-.. _getter-functions:
-
-Getter Functions
-================
-
-The compiler automatically creates getter functions for
-all **public** state variables. For the contract given below, the compiler will
-generate a function called ``data`` that does not take any
-arguments and returns a ``uint``, the value of the state
-variable ``data``. State variables can be initialized
-when they are declared.
-
-::
-
-    pragma solidity >=0.4.0 <0.6.0;
-
-    contract C {
-        uint public data = 42;
-    }
-
-    contract Caller {
-        C c = new C();
-        function f() public view returns (uint) {
-            return c.data();
-        }
-    }
-
-The getter functions have external visibility. If the
-symbol is accessed internally (i.e. without ``this.``),
-it evaluates to a state variable.  If it is accessed externally
-(i.e. with ``this.``), it evaluates to a function.
-
-::
-
-    pragma solidity >=0.4.0 <0.6.0;
-
-    contract C {
-        uint public data;
-        function x() public returns (uint) {
-            data = 3; // internal access
-            return this.data(); // external access
-        }
-    }
-
-If you have a ``public`` state variable of array type, then you can only retrieve
-single elements of the array via the generated getter function. This mechanism
-exists to avoid high gas costs when returning an entire array. You can use
-arguments to specify which individual element to return, for example
-``data(0)``. If you want to return an entire array in one call, then you need
-to write a function, for example:
-
-::
-
-  pragma solidity >=0.4.0 <0.6.0;
-
-  contract arrayExample {
-    // public state variable
-    uint[] public myArray;
-
-    // Getter function generated by the compiler
-    /*
-    function myArray(uint i) returns (uint) {
-        return myArray[i];
-    }
-    */
-
-    // function that returns entire array
-    function getArray() returns (uint[] memory) {
-        return myArray;
-    }
-  }
-
-Now you can use ``getArray()`` to retrieve the entire array, instead of
-``myArray(i)``, which returns a single element per call.
-
-The next example is more complex:
-
-::
-
-    pragma solidity >=0.4.0 <0.6.0;
-
-    contract Complex {
-        struct Data {
-            uint a;
-            bytes3 b;
-            mapping (uint => uint) map;
-        }
-        mapping (uint => mapping(bool => Data[])) public data;
-    }
-
-It generates a function of the following form. The mapping in the struct is omitted
-because there is no good way to provide the key for the mapping:
-
-::
-
-    function data(uint arg1, bool arg2, uint arg3) public returns (uint a, bytes3 b) {
-        a = data[arg1][arg2][arg3].a;
-        b = data[arg1][arg2][arg3].b;
-    }
+.. include:: contracts/visibility-and-getters.rst
 
 .. index:: ! function;modifier
 
