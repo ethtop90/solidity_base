@@ -15565,6 +15565,22 @@ BOOST_AUTO_TEST_CASE(contract_name)
 	ABI_CHECK(callContractFunction("constantNameAccessor()"), argsLong);
 }
 
+BOOST_AUTO_TEST_CASE(dirty_scratch_space_prior_to_constant_optimiser)
+{
+	char const* sourceCode = R"(
+		contract C {
+			function test() public returns (uint) {
+				assembly {
+					// make scratch space dirty
+					mstore(0, 0x4242424242424242424242424242424242424242424242424242424242424242)
+				}
+				return 0x0000000000001234123412431234123412412342112341234124312341234124;
+			}
+		}
+	)";
+	compileAndRun(sourceCode, 0, "C");
+	ABI_CHECK(callContractFunction("test()"), encodeArgs(u256("0x0000000000001234123412431234123412412342112341234124312341234124")));
+}
 
 BOOST_AUTO_TEST_SUITE_END()
 
