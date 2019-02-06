@@ -4,6 +4,7 @@ Language Features:
 
 
 Compiler Features:
+ * Type Checker: Provide better error messages for nested mappings that are requested to live outside storage.
 
 
 Bugfixes:

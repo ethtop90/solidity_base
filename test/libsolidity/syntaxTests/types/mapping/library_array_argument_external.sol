@@ -3,4 +3,4 @@ library L {
     }
 }
 // ----
-// TypeError: (27-58): Type is required to live outside storage.
+// TypeError: (27-58): Mappings cannot live outside storage.
