@@ -249,7 +249,7 @@ public:
 	Json::Value methodIdentifiers(std::string const& _contractName) const;
 
 	/// @returns the Contract Metadata
-	std::string const& metadata(std::string const& _contractName) const;
+	std::string const& metadata(std::string const& _contractName);
 
 	/// @returns a JSON representing the estimated gas usage for contract creation, internal and external functions
 	Json::Value gasEstimates(std::string const& _contractName) const;

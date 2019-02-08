@@ -593,12 +593,19 @@ Json::Value CompilerStack::methodIdentifiers(string const& _contractName) const
 	return methodIdentifiers;
 }
 
-string const& CompilerStack::metadata(string const& _contractName) const
+string const& CompilerStack::metadata(string const& _contractName)
 {
-	if (m_stackState != CompilationSuccessful)
-		BOOST_THROW_EXCEPTION(CompilerError() << errinfo_comment("Compilation was not successful."));
+	if (m_stackState < AnalysisSuccessful)
+		BOOST_THROW_EXCEPTION(CompilerError() << errinfo_comment("Analysis was not successful."));
 
-	return contract(_contractName).metadata;
+	auto cm = m_contracts.find(_contractName);
+	solAssert(cm != m_contracts.end(), "");
+
+	Contract& contract = cm->second;
+	if (contract.metadata.empty())
+		contract.metadata = createMetadata(contract);
+
+	return contract.metadata;
 }
 
 Scanner const& CompilerStack::scanner(string const& _sourceName) const
@@ -812,11 +819,8 @@ void CompilerStack::compileContract(
 	shared_ptr<Compiler> compiler = make_shared<Compiler>(m_evmVersion, m_optimize, m_optimizeRuns);
 	compiledContract.compiler = compiler;
 
-	string metadata = createMetadata(compiledContract);
-	compiledContract.metadata = metadata;
-
 	bytes cborEncodedMetadata = createCBORMetadata(
-		metadata,
+		compiledContract.metadata,
 		!onlySafeExperimentalFeaturesActivated(_contract.sourceUnit().annotation().experimentalFeatures)
 	);
 

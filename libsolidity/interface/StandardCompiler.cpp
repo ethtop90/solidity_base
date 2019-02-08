@@ -201,7 +201,6 @@ bool isBinaryRequested(Json::Value const& _outputSelection)
 	// This does not inculde "evm.methodIdentifiers" on purpose!
 	static vector<string> const outputsThatRequireBinaries{
 		"*",
-		"metadata", // This is only generated at the end of compilation, but could be generated earlier.
 		"evm.deployedBytecode", "evm.deployedBytecode.object", "evm.deployedBytecode.opcodes",
 		"evm.deployedBytecode.sourceMap", "evm.deployedBytecode.linkReferences",
 		"evm.bytecode", "evm.bytecode.object", "evm.bytecode.opcodes", "evm.bytecode.sourceMap",
