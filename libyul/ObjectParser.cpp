@@ -36,8 +36,8 @@ shared_ptr<Object> ObjectParser::parse(shared_ptr<Scanner> const& _scanner, bool
 	m_recursionDepth = 0;
 	try
 	{
-		shared_ptr<Object> object;
 		m_scanner = _scanner;
+		shared_ptr<Object> object;
 		if (currentToken() == Token::LBrace)
 		{
 			// Special case: Code-only form.
@@ -55,8 +55,7 @@ shared_ptr<Object> ObjectParser::parse(shared_ptr<Scanner> const& _scanner, bool
 	}
 	catch (FatalError const&)
 	{
-		if (m_errorReporter.errors().empty())
-			throw; // Something is weird here, rather throw again.
+		solAssert(!m_errorReporter.errors().empty(), "Fatal error caught, but no error message presented.");
 	}
 	return nullptr;
 }
