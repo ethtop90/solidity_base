@@ -36,6 +36,7 @@ namespace eth
 {
 
 enum AssemblyItemType {
+	InvalidItem,
 	UndefinedItem,
 	Operation,
 	Push,

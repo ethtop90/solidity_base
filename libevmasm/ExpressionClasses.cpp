@@ -203,7 +203,10 @@ ExpressionClasses::Id ExpressionClasses::tryToSimplify(Expression const& _expr)
 		//cout << "with rule " << match->first.toString() << endl;
 		//ExpressionTemplate t(match->second());
 		//cout << "to " << match->second().toString() << endl;
-		return rebuildExpression(ExpressionTemplate(match->action(), _expr.item->location()));
+		auto ret = match->action();
+		if (ret.type() == InvalidItem)
+			return -1;
+		return rebuildExpression(ExpressionTemplate(ret, _expr.item->location()));
 	}
 
 	return -1;

@@ -49,6 +49,7 @@ template <class S> S modWorkaround(S const& _a, S const& _b)
 // simplificationRuleList below was split up into parts to prevent
 // stack overflows in the JavaScript optimizer for emscripten builds
 // that affected certain browser versions.
+// Rules can signal a failure to simplify by returning {InvalidItem}
 template <class Pattern>
 std::vector<SimplificationRule<Pattern>> simplificationRuleListPart1(
 	Pattern A,
