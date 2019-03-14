@@ -354,7 +354,7 @@ bool TypeChecker::visit(FunctionDefinition const& _function)
 		else
 		{
 			BoolResult canLiveOutsideStorage = type(var)->canLiveOutsideStorage();
-			if (_function.isPublic() && !canLiveOutsideStorage)
+			if (!canLiveOutsideStorage && _function.isPublic())
 			{
 				if (canLiveOutsideStorage.message().empty())
 					m_errorReporter.typeError(var.location(), "Type is required to live outside storage.");
@@ -470,8 +470,16 @@ bool TypeChecker::visit(VariableDeclaration const& _variable)
 	if (!_variable.isStateVariable())
 	{
 		if (varType->dataStoredIn(DataLocation::Memory) || varType->dataStoredIn(DataLocation::CallData))
-			if (!varType->canLiveOutsideStorage())
-				m_errorReporter.typeError(_variable.location(), "Type " + varType->toString() + " is only valid in storage.");
+		{
+			auto canLiveOutsideStorage = varType->canLiveOutsideStorage();
+			if (!canLiveOutsideStorage)
+			{
+				m_errorReporter.typeError(
+					_variable.location(),
+					"Type " + varType->toString() + " is only valid in storage. " + canLiveOutsideStorage.message()
+				);
+			}
+		}
 	}
 	else if (_variable.visibility() >= VariableDeclaration::Visibility::Public)
 	{
