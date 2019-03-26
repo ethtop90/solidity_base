@@ -258,6 +258,9 @@ message IfStmt {
 
 message ForStmt {
   required Block for_body = 1;
+  required ForInitBlock for_init = 2;
+  required ForPostBlock for_post = 3;
+  required Expression for_cond = 4;
 }
 
 message CaseStmt {
@@ -306,6 +309,48 @@ message TerminatingStmt {
 
 // Stub for a VarDecl without an Expression on the RHS
 message EmptyVarDecl {}
+
+message ForInitStatement {
+  oneof stmt_oneof {
+    AssignmentStatement assignment    = 1;
+    IfStmt              ifstmt        = 2;
+    StoreFunc           storage_func  = 3;
+    Block               blockstmt     = 4;
+    ForStmt             forstmt       = 5;
+    SwitchStmt          switchstmt    = 6;
+    LogFunc             log_func      = 7;
+    CopyFunc            copy_func     = 8;
+    ExtCodeCopy         extcode_copy  = 9;
+    TerminatingStmt     terminatestmt = 10;
+    FunctionCallNoReturnVal funccall  = 11;
+    MultiAssignment     multiassign   = 12;
+  }
+}
+
+message ForInitBlock {
+  repeated ForInitStatement forinit_stmts = 1;
+}
+
+message ForPostStatement {
+  oneof stmt_oneof {
+    VarDecl             decl          = 1;
+    AssignmentStatement assignment    = 2;
+    IfStmt              ifstmt        = 3;
+    StoreFunc           storage_func  = 4;
+    Block               blockstmt     = 5;
+    ForStmt             forstmt       = 6;
+    SwitchStmt          switchstmt    = 7;
+    LogFunc             log_func      = 8;
+    CopyFunc            copy_func     = 9;
+    ExtCodeCopy         extcode_copy  = 10;
+    TerminatingStmt     terminatestmt = 11;
+    FunctionCall        functioncall  = 12;
+  }
+}
+
+message ForPostBlock {
+  repeated ForPostStatement forpost_stmts = 1;
+}
 
 // TODO: Make Function definition a Statement
 message Statement {
