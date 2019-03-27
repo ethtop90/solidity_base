@@ -314,6 +314,22 @@ jobs:
           path: test_results/
           destination: test_results/
 
+  test_docs_examples:
+    docker:
+      - image: circleci/node
+    environment:
+      TERM: xterm
+    steps:
+      - checkout
+      - attach_workspace:
+          at: build
+      - run:
+          name: JS deps
+          command: sudo npm install -g solhint
+      - run:
+          name: Test Docs examples
+          command: ./test/docsExamples.sh
+
   test_x86_clang7_asan:
     docker:
       - image: buildpack-deps:cosmic
@@ -496,6 +512,7 @@ workflows:
           requires:
             - build_x86_mac
       - docs: *build_on_tags
+      - test_docs_examples: *build_on_tags
       - build_x86_archlinux: *build_on_tags
       - test_x86_archlinux:
           <<: *build_on_tags
