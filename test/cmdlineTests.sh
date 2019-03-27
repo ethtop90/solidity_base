@@ -46,6 +46,10 @@ else
     function printError() { echo "$(tput setaf 1)$1$(tput sgr0)"; }
 fi
 
+function syntaxTest()
+{
+ solhint -f table -c ./.solhint.json $1
+}
 
 function compileFull()
 {
@@ -263,6 +267,8 @@ SOLTMPDIR=$(mktemp -d)
     REPO_ROOT=$(pwd) # make it absolute
     cd "$SOLTMPDIR"
     "$REPO_ROOT"/scripts/isolate_tests.py "$REPO_ROOT"/docs/ docs
+    solhint init-config
+
     for f in *.sol
     do
         # The contributors guide uses syntax tests, but we cannot
@@ -272,6 +278,11 @@ SOLTMPDIR=$(mktemp -d)
             continue
         fi
         echo "$f"
+
+        solhint -f table "$SOLTMPDIR/$f"
+
+        # syntaxTest "$SOLTMPDIR/$f"
+
         opts=''
         # We expect errors if explicitly stated, or if imports
         # are used (in the style guide)
