@@ -1106,10 +1106,11 @@ added looks like the one below::
 
     pragma solidity >=0.4.0 <0.7.0;
 
+
     /// @author The Solidity Team
     /// @title A simple storage example
     contract SimpleStorage {
-        uint storedData;
+        uint public storedData;
 
         /// Store `x`.
         /// @param x the new value to store
