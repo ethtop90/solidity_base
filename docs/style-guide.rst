@@ -1122,7 +1122,7 @@ added looks like the one below::
     /// @author The Solidity Team
     /// @title A simple storage example
     contract SimpleStorage {
-        uint public storedData;
+        uint private storedData;
 
         /// Store `x`.
         /// @param x the new value to store
