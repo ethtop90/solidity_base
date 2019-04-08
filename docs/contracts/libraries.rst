@@ -92,7 +92,7 @@ more advanced example to implement a set).
 
 
     contract C {
-        Set.Data private knownValues;
+        Set.Data knownValues;
 
         function register(uint value) public {
             // The library functions can be called without a

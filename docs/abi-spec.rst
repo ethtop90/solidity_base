@@ -492,7 +492,7 @@ For example,
         event Event(uint indexed a, bytes32 b);
         event Event2(uint indexed a, bytes32 b);
         function foo(uint a) public { emit Event(a, b); }
-        bytes32 private b;
+        bytes32 b;
     }
 
 would result in the JSON:

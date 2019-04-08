@@ -40,9 +40,9 @@ This means that cyclic creation dependencies are impossible.
         // `TokenCreator` is a contract type that is defined below.
         // It is fine to reference it as long as it is not used
         // to create a new contract.
-        TokenCreator private creator;
-        address private owner;
-        bytes32 private name;
+        TokenCreator creator;
+        address owner;
+        bytes32 name;
 
         // This is the constructor which registers the
         // creator and the assigned name.

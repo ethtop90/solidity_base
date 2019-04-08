@@ -94,7 +94,7 @@ Details are given in the following example.
 
         function get() public view returns(uint r) { return info; }
 
-        uint private info;
+        uint info;
     }
 
 Note that above, we call ``mortal.kill()`` to "forward" the
