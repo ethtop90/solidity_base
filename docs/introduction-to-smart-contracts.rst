@@ -118,11 +118,8 @@ to the following (ignore ``external`` and ``view`` for now)::
 
     function minter() external view returns (address) { return minter; }
 
-Adding a function like the above does not work because you would have a
-function and a state variable with the same name, but hopefully, you
-get the idea - the compiler figures that out for you.
-
-.. TODO: Figures out what?
+You could add a function like the above yourself, but you would have a function and state variable with the same name.
+    You don't need to do this, the compiler figures it out for you.
 
 .. index:: mapping
 
@@ -158,10 +155,8 @@ cost. As soon as it is emitted, the listener receives the
 arguments ``from``, ``to`` and ``amount``, which makes it possible to track
 transactions.
 
-.. TODO: Link the below
-
 To listen for this event, you could use the following
-JavaScript code , which uses web3.js to create the ``Coin`` contract object::
+JavaScript code , which uses `web3.js <https://github.com/ethereum/web3.js/>`_ to create the ``Coin`` contract object::
 
     Coin.Sent().watch({}, '', function(error, result) {
         if (!error) {
@@ -185,9 +180,9 @@ contract: ``msg`` (together with ``tx`` and ``block``) is a special global varia
 contains properties which allow access to the blockchain. ``msg.sender`` is
 always the address where the current (external) function call came from.
 
-.. TODO: This needs clarifying and links
+.. TODO: This needs clarifying and links, not really much more detail in docs
 
-Finally, the functions that make up the contract and that users and contracts can call are ``mint`` and ``send``.
+The functions that make up the contract, and that users and contracts can call are ``mint`` and ``send``.
 If ``mint`` is called by anyone except the account that created the contract,
 nothing happens. This is ensured by the special function ``require`` which
 causes all changes to be reverted if its argument evaluates to false.
@@ -266,10 +261,8 @@ These blocks form a linear sequence in time, and that is where the word "blockch
 derives. Blocks are added to the chain in regular intervals - for
 Ethereum roughly every 17 seconds.
 
-.. TODO: What's the tip mean?
-
 As part of the "order selection mechanism" (which is called "mining") it may happen that
-blocks are reverted from time to time, but only at the "tip" of the chain. The more
+blocks are reverted from time to time, but only at the beginning of the chain. The more
 blocks added on top of a particular block, the less likely this block is reverted. It might be that your transactions
 are reverted, and even removed from the blockchain, but the longer you wait, the less
 likely it will be.
@@ -328,10 +321,8 @@ include Ether.
 Transactions
 ============
 
-.. TODO: See where below, link
-
 A transaction is a message that is sent from one account to another
-account (which might be the same or empty, see below).
+account (which might be the same account or an empty account).
 It can include binary data (called "payload") and Ether.
 
 If the target account contains code, that code is executed and
@@ -404,8 +395,6 @@ accessing (either reading or writing) a previously untouched memory word (i.e. a
 within a word). At the time of expansion, the cost in gas must be paid. Memory is more
 costly the larger it grows (it scales quadratically).
 
-.. TODO: Maybe links to more info
-
 The EVM is not a register machine but a stack machine, so all
 computations are performed on a data area called the **stack**. It has a maximum size of
 1024 elements and contains words of 256 bits.
@@ -427,10 +416,8 @@ without first removing the top of the stack.
 Instruction Set
 ===============
 
-.. TODO: And what is consensus, not mentioned so far
-
 The instruction set of the EVM is kept minimal in order to avoid
-incorrect or inconsistent implementations which could cause consensus problems.
+incorrect or inconsistent implementations which could cause consensus problems across the Ethereum network.
 All instructions operate on the basic data type, 256-bit words or on slices of memory
 (or other byte arrays).
 The usual arithmetic, bit, logical and comparison operations are present.
@@ -459,11 +446,9 @@ In this case, only the gas sent together with the call is used up.
 In Solidity, the calling contract causes a manual exception by default in
 such situations, so that exceptions "bubble up" the call stack.
 
-.. TODO: links
-
 The called contract (which can be the same as the caller)
 receives a freshly cleared instance of memory and has access to the
-call payload - provided in a separate area called the **calldata**.
+call payload - provided in a separate area called the :ref:`"calldata" <data-location>`.
 After it has finished execution, it can return data to be stored at
 a location in the caller's memory preallocated by the caller.
 All such calls are fully synchronous.
@@ -487,10 +472,7 @@ This means that a contract can dynamically load code from a different
 address at runtime. Storage, current address and balance still
 refer to the calling contract, only the code is taken from the called address.
 
-.. TODO: links, and what this means
-
-This makes it possible to implement the "library" feature in Solidity:
-Reusable library code that can be applied to a contract's storage, e.g., to implement a complex data structure.
+This makes it possible to implement the :ref:`"library" <libraries>` feature in Solidity. Libraries are reusable contracts that can be applied to a contract's storage, e.g., to implement a complex data structure.
 
 .. index:: log
 
@@ -515,7 +497,7 @@ Create
 ======
 
 Contracts can create other contracts using a special opcode (i.e.,
-they do not simply call the zero address as a transaction would). The only difference between
+they do not call the zero address as a transaction would). The only difference between
 these **create calls** and normal message calls is that the payload data is
 executed and the result stored as code and the caller / creator
 receives the address of the new contract on the stack.
