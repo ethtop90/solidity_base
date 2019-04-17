@@ -75,7 +75,7 @@ cryptocurrency. It is possible to generate coins out of thin air, but
 only the person that created the contract is able to do that (it is possible
 to implement a different issuance scheme).
 Furthermore, anyone can send coins to each other without a need for
-registering with username and password”, all you need is an Ethereum keypair.
+registering with username and password, all you need is an Ethereum keypair.
 
 ::
 
@@ -107,7 +107,7 @@ registering with username and password”, all you need is an Ethereum keypair.
 
 This contract introduces some new concepts, let us go through them one by one.
 
-The line ``address public minter;`` declares a state variable of type :ref:`address<adress>`
+The line ``address public minter;`` declares a state variable of type :ref:`address<address>`
 that is publicly accessible. The ``address`` type is a 160-bit value that does not allow any arithmetic operations.
 It is suitable for storing addresses of contracts, or of keypairs belonging to external persons.
 
@@ -119,13 +119,13 @@ to the following (ignore ``external`` and ``view`` for now)::
     function minter() external view returns (address) { return minter; }
 
 You could add a function like the above yourself, but you would have a function and state variable with the same name.
-    You don't need to do this, the compiler figures it out for you.
+You don't need to do this, the compiler figures it out for you.
 
 .. index:: mapping
 
 The next line, ``mapping (address => uint) public balances;`` also
 creates a public state variable, but it is a more complex datatype.
-The :ref:`mapping<mapping>` type maps addresses to unsigned integers.
+The :ref:`mapping <mapping-types>` type maps addresses to unsigned integers.
 
 Mappings can be seen as `hash tables <https://en.wikipedia.org/wiki/Hash_table>`_ which are
 virtually initialised such that every possible key exists from the start and is mapped to a
@@ -180,11 +180,9 @@ contract: ``msg`` (together with ``tx`` and ``block``) is a special global varia
 contains properties which allow access to the blockchain. ``msg.sender`` is
 always the address where the current (external) function call came from.
 
-.. TODO: This needs clarifying and links, not really much more detail in docs
-
 The functions that make up the contract, and that users and contracts can call are ``mint`` and ``send``.
 If ``mint`` is called by anyone except the account that created the contract,
-nothing happens. This is ensured by the special function ``require`` which
+nothing happens. This is ensured by the special function :ref:`require <assert-and-require>`  which
 causes all changes to be reverted if its argument evaluates to false.
 The second call to ``require`` ensures that there will not be too many coins,
 which could cause overflow errors later.
@@ -197,7 +195,7 @@ user with an appropriate error message string.
 .. note::
     If you use
     this contract to send coins to an address, you will not see anything when you
-    look at that address on a blockchain explorer, because the fact that you sent
+    look at that address on a blockchain explorer, because the record that you sent
     coins and the changed balances are only stored in the data storage of this
     particular coin contract. By using events, you can create
     a "blockchain explorer" that tracks transactions and balances of your new coin,
@@ -249,8 +247,6 @@ One major obstacle to overcome is what is called a "double-spend attack". What h
 network that both want to empty an account?
 Only one of the transactions can be valid, typically the one that is accepted first.
 The problem is that "first" is not an objective term in a peer-to-peer network.
-
-.. TODO: this is really vague and abstract, at least link to more details.
 
 The abstract answer is that you do not have to worry. A globally accepted order of the transactions
 is selected for you, solving the conflict. The transactions are bundled into a "block"
@@ -479,8 +475,6 @@ This makes it possible to implement the :ref:`"library" <libraries>` feature in 
 Logs
 ====
 
-.. TODO: Polish
-
 It is possible to store data in a specially indexed data structure
 that maps all the way up to the block level. This feature called **logs**
 is used by Solidity in order to implement :ref:`events <events>`.
@@ -489,7 +483,7 @@ can be efficiently accessed from outside the blockchain.
 Since some part of the log data is stored in `bloom filters <https://en.wikipedia.org/wiki/Bloom_filter>`_, it is
 possible to search for this data in an efficient and cryptographically
 secure way, so network peers that do not download the whole blockchain
-(so-called "light clients") can still find these logs.
+(called "light clients") can still find these logs.
 
 .. index:: contract creation
 
