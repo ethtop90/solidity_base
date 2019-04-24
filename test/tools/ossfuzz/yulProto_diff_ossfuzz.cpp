@@ -52,6 +52,9 @@ DEFINE_PROTO_FUZZER(Function const& _input)
 		of.write(yul_source.data(), yul_source.size());
 	}
 
+	// Reset YulStringRepository
+	YulStringRepository::instance().reset();
+
 	// AssemblyStack entry point
 	AssemblyStack stack(
 		langutil::EVMVersion(),

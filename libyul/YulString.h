@@ -44,6 +44,12 @@ public:
 	};
 
 	YulStringRepository() = default;
+	YulStringRepository& operator=(YulStringRepository&& _rhs)
+	{
+		m_strings = std::move(_rhs.m_strings);
+		m_hashToID = std::move(_rhs.m_hashToID);
+		return *this;
+	}
 
 	static YulStringRepository& instance()
 	{
@@ -79,6 +85,14 @@ public:
 		return hash;
 	}
 	static constexpr std::uint64_t emptyHash() { return 14695981039346656037u; }
+	// Use with care: Only call when there are no dangling YulString references anywhere in memory.
+	// Currently only used by ossfuzz test harnesses between fuzz iterations to free up memory allocated
+	// for YulStrings that are guaranteed to be no longer used.
+	void reset()
+	{
+		*this = YulStringRepository{};
+	}
+
 
 private:
 	std::vector<std::shared_ptr<std::string>> m_strings = {std::make_shared<std::string>()};
