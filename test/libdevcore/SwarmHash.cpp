@@ -22,6 +22,8 @@
 
 #include <test/Options.h>
 
+#include <libdevcore/Keccak256.h>
+
 using namespace std;
 
 namespace dev
@@ -34,6 +36,11 @@ BOOST_AUTO_TEST_SUITE(SwarmHash)
 string swarmHashHex(string const& _input)
 {
 	return toHex(swarmHash(_input).asBytes());
+}
+
+string bmtHashHex(bytes const& _input)
+{
+	return toHex(bzzHash(_input).asBytes());
 }
 
 BOOST_AUTO_TEST_CASE(test_zeros)
@@ -49,6 +56,24 @@ BOOST_AUTO_TEST_CASE(test_zeros)
 	BOOST_CHECK_EQUAL(swarmHashHex(string(0x80020, 0)), string("ee9ffca246e70d3704740ba4df450fa6988d14a1c2439c7e734c7a77a4eb6fd3"));
 	BOOST_CHECK_EQUAL(swarmHashHex(string(0x800020, 0)), string("78b90b20c90559fb904535181a7c28929ea2f30a2329dbc25232de579709f12f"));
 	BOOST_CHECK_EQUAL(swarmHashHex(string(2095104, 0)), string("a9958184589fc11b4027a4c233e777ebe2e99c66f96b74aef2a0638a94dd5439"));
+}
+
+BOOST_AUTO_TEST_CASE(bzz_hash_short)
+{
+	// All of them are equal to the hash of 64 zero-bytes
+	BOOST_CHECK_EQUAL(bmtHashHex(bytes()), toHex(dev::keccak256(bytes(64, 0))));
+	BOOST_CHECK_EQUAL(bmtHashHex(bytes(1, 0)), toHex(dev::keccak256(bytes(64, 0))));
+	BOOST_CHECK_EQUAL(bmtHashHex(bytes(31, 0)), toHex(dev::keccak256(bytes(64, 0))));
+	BOOST_CHECK_EQUAL(bmtHashHex(bytes(32, 0)), toHex(dev::keccak256(bytes(64, 0))));
+	BOOST_CHECK_EQUAL(bmtHashHex(bytes(33, 0)), toHex(dev::keccak256(bytes(64, 0))));
+	BOOST_CHECK_EQUAL(bmtHashHex(bytes(63, 0)), toHex(dev::keccak256(bytes(64, 0))));
+	BOOST_CHECK_EQUAL(bmtHashHex(bytes(64, 0)), toHex(dev::keccak256(bytes(64, 0))));
+}
+
+BOOST_AUTO_TEST_CASE(bzz_hash_medium)
+{
+	BOOST_CHECK_EQUAL(bmtHashHex(bytes(65, 0)), "b4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30");
+	BOOST_CHECK_EQUAL(bmtHashHex(bytes(300, 0)), "e58769b32a1beaf1ea27375a44095a0d1fb664ce2dd358e7fcbfb78c26a19344");
 }
 
 BOOST_AUTO_TEST_SUITE_END()

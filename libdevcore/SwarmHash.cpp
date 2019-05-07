@@ -61,9 +61,30 @@ h256 swarmHashIntermediate(string const& _input, size_t _offset, size_t _length)
 	return swarmHashSimple(ref, _length);
 }
 
+h256 bmtHash(bytesConstRef _data)
+{
+	if (_data.size() <= 64)
+		return keccak256(_data);
+	size_t midPoint = _data.size() / 2;
+	return keccak256(
+		bmtHash(_data.cropped(0, midPoint)).asBytes() +
+		bmtHash(_data.cropped(midPoint)).asBytes()
+	);
+}
+
 }
 
 h256 dev::swarmHash(string const& _input)
 {
 	return swarmHashIntermediate(_input, 0, _input.size());
+}
+
+h256 dev::bzzHash(bytes _input)
+{
+	cout << toHex(dev::keccak256(toLittleEndian(1) + bytes(1, 0))) << endl;
+	size_t paddedSize = 64;
+	while (paddedSize < _input.size())
+		paddedSize *= 2;
+	_input.resize(paddedSize, 0);
+	return bmtHash(bytesConstRef(&_input));
 }
