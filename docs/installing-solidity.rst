@@ -60,17 +60,35 @@ Please refer to the solc-js repository for instructions.
 Docker
 ======
 
-We provide up to date docker builds for the compiler. The ``stable``
-repository contains released versions while the ``nightly``
-repository contains potentially unstable changes in the develop branch.
+Docker images of Solidity builds are available using the `solc` image from the `ethereum` organisation. Use the ``stable`` tag for the
+latest released version, and ``nightly`` for potentially unstable changes in the develop branch.
+The command below pulls the stable version of the `solc` image (if you don't have it already), and runs it in a new container,
+currently passing no input files or compiler options:
+
+.. code-block:: bash
+
+    docker run ethereum/solc:stable
+
+You can also specify specific release build versions in the tag, for example, for the 0.5.4 release.
+
+.. code-block:: bash
+
+    docker run ethereum/solc:0.5.4
+
+The Docker images contains the compiler executable, so you can pass all compiler arguments to it. For example.
 
 .. code-block:: bash
 
     docker run ethereum/solc:stable --version
 
-Currently, the docker image only contains the compiler executable,
-so you have to do some additional work to link in the source and
-output directories.
+To use the Docker image to compile Solidity files on the host machine mount a
+local folder for input and output, and specify the contract to compile. For example.
+
+.. code-block:: bash
+
+    docker run -v /local/path:/mounted/path ethereum/solc:stable -o /local/path/output --abi --bin /local/path/contract.sol
+
+
 
 Binary Packages
 ===============
