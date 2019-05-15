@@ -13,8 +13,9 @@ Compiler Features:
  * SMTChecker: Inline external function calls to ``this``.
  * Metadata: Add IPFS hashes of source files.
  * Assembler: Encode the compiler version in the deployed bytecode.
- * Yul Optimizer: Simplify single-run ``for`` loops to ``if`` statements.
  * Optimizer: Add rules for multiplication and division by left-shifted one.
+ * Yul Optimizer: Simplify single-run ``for`` loops to ``if`` statements.
+ * Yul Optimizer: Optimize representation of numbers.
 
 
 Bugfixes:
