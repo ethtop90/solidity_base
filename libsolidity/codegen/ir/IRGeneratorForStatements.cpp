@@ -94,6 +94,28 @@ string IRGeneratorForStatements::code() const
 	return m_code.str();
 }
 
+bool IRGeneratorForStatements::visit(VariableDeclaration const& _varDecl)
+{
+	if (_varDecl.value())
+	{
+		_varDecl.value()->accept(*this);
+
+		unique_ptr<IRLValue> lvalue;
+		if (m_context.isLocalVariable(_varDecl))
+			lvalue = make_unique<IRLocalVariable>(m_context, _varDecl);
+		else if (m_context.isStateVariable(_varDecl))
+			lvalue = make_unique<IRStorageItem>(m_context, _varDecl);
+		else
+			solAssert(false, "Invalid variable kind.");
+
+		m_code << lvalue->storeValue(
+			m_context.variable(*_varDecl.value()),
+			*_varDecl.value()->annotation().type
+		);
+	}
+	return true;
+}
+
 void IRGeneratorForStatements::endVisit(VariableDeclarationStatement const& _varDeclStatement)
 {
 	for (auto const& decl: _varDeclStatement.declarations())

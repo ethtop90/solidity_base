@@ -45,6 +45,7 @@ public:
 
 	std::string code() const;
 
+	bool visit(VariableDeclaration const& _varDecl) override;
 	void endVisit(VariableDeclarationStatement const& _variableDeclaration) override;
 	bool visit(Assignment const& _assignment) override;
 	bool visit(TupleExpression const& _tuple) override;
