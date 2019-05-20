@@ -56,8 +56,17 @@ public:
 
 	std::vector<std::string> unhandledQueries() override;
 	unsigned solvers() override { return m_solvers.size(); }
+
+	Expression assertion()
+	{
+		if (m_assertions.empty())
+			return true;
+		return m_assertions.back();
+	}
 private:
 	static bool solverAnswered(CheckResult result);
+
+	std::vector<Expression> m_assertions;
 
 	std::vector<std::unique_ptr<smt::SolverInterface>> m_solvers;
 };

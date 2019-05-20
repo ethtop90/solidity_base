@@ -33,19 +33,28 @@ class CHCSolverInterface: public SolverInterface
 {
 public:
 	virtual ~CHCSolverInterface() = default;
-	virtual void reset() = 0;
+	void reset() override = 0;
 
 	void push() override { solAssert(false, "Horn solver does not support push."); }
 	void pop() override { solAssert(false, "Horn solver does not support pop."); }
-	void pop() override { solAssert(false, "Horn solver does not support pop."); }
+	void addAssertion(Expression const&) override { solAssert(false, "Horn solver does not support assertions."); }
 
+	/// Takes a function declaration as a relation.
 	virtual void registerRelation(Expression const& _expr) = 0;
-	virtual void addRule(Expression const& _expr) = 0;
 
-	/// Checks for reachability.
-	/// Throws SMTSolverError on error.
-	virtual std::pair<CheckResult, std::vector<std::string>>
-	query(std::vector<Expression> const& _expressionsToEvaluate) = 0;
+	/// Takes an implication and adds as rule.
+	/// Needs to bound all vars as universally quantified.
+	virtual void addRule(Expression const& _expr, std::string const& _name) = 0;
+
+	/// Takes a function application and checks
+	/// for reachability.
+	std::pair<CheckResult, std::vector<std::string>> check(
+		std::vector<Expression> const& _expressionsToEvaluate
+	) override = 0;
+
+	virtual std::pair<CheckResult, std::vector<std::string>> query(
+		Expression const& _expr
+	) = 0;
 };
 
 }

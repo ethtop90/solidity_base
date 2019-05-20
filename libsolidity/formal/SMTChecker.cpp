@@ -20,6 +20,7 @@
 #include <libsolidity/ast/TypeProvider.h>
 #include <libsolidity/formal/SMTPortfolio.h>
 #include <libsolidity/formal/SymbolicTypes.h>
+#include <libsolidity/formal/CHCModel.h>
 
 #include <libdevcore/StringUtils.h>
 
@@ -74,6 +75,9 @@ void SMTChecker::analyze(SourceUnit const& _source, shared_ptr<Scanner> const& _
 	else
 		m_errorReporterReference.append(m_errorReporter.errors());
 	m_errorReporter.clear();
+
+	CHCModel chc(m_context, m_errorReporterReference);
+	chc.analyze(_source);
 }
 
 bool SMTChecker::visit(ContractDefinition const& _contract)
@@ -120,6 +124,7 @@ bool SMTChecker::visit(FunctionDefinition const& _function)
 		m_externalFunctionCallHappened = false;
 	}
 	m_modifierDepthStack.push_back(-1);
+	m_context.saveIndicesBeforeBlock(&_function);
 	if (_function.isConstructor())
 	{
 		m_errorReporter.warning(
@@ -181,8 +186,11 @@ bool SMTChecker::visit(PlaceholderStatement const&)
 	return true;
 }
 
-void SMTChecker::endVisit(FunctionDefinition const&)
+void SMTChecker::endVisit(FunctionDefinition const& _function)
 {
+	m_context.saveIndicesAfterBlock(&_function);
+	auto portfolio = dynamic_cast<smt::SMTPortfolio*>(m_interface.get());
+	m_context.saveConstraintsAtStatement(&_function, portfolio->assertion());
 	m_callStack.pop_back();
 	solAssert(m_modifierDepthStack.back() == -1, "");
 	m_modifierDepthStack.pop_back();
@@ -225,7 +233,7 @@ bool SMTChecker::visit(IfStatement const& _node)
 		touchedVars += touchedVariables(*_node.falseStatement());
 	}
 	else
-		indicesEndFalse = copyVariableIndices();
+		indicesEndFalse = m_context.copyVariableIndices();
 
 	mergeVariables(touchedVars, expr(_node.condition()), indicesEndTrue, indicesEndFalse);
 
@@ -243,7 +251,7 @@ bool SMTChecker::visit(IfStatement const& _node)
 // Variables touched by the loop are merged with Branch 2.
 bool SMTChecker::visit(WhileStatement const& _node)
 {
-	auto indicesBeforeLoop = copyVariableIndices();
+	auto indicesBeforeLoop = m_context.copyVariableIndices();
 	auto touchedVars = touchedVariables(_node);
 	m_context.resetVariables(touchedVars);
 	decltype(indicesBeforeLoop) indicesAfterLoop;
@@ -272,7 +280,7 @@ bool SMTChecker::visit(WhileStatement const& _node)
 	if (!_node.isDoWhile())
 		_node.condition().accept(*this);
 
-	mergeVariables(touchedVars, expr(_node.condition()), indicesAfterLoop, copyVariableIndices());
+	mergeVariables(touchedVars, expr(_node.condition()), indicesAfterLoop, m_context.copyVariableIndices());
 
 	m_loopExecutionHappened = true;
 	return false;
@@ -284,7 +292,7 @@ bool SMTChecker::visit(ForStatement const& _node)
 	if (_node.initializationExpression())
 		_node.initializationExpression()->accept(*this);
 
-	auto indicesBeforeLoop = copyVariableIndices();
+	auto indicesBeforeLoop = m_context.copyVariableIndices();
 
 	// Do not reset the init expression part.
 	auto touchedVars = touchedVariables(_node.body());
@@ -310,7 +318,7 @@ bool SMTChecker::visit(ForStatement const& _node)
 		_node.loopExpression()->accept(*this);
 	m_interface->pop();
 
-	auto indicesAfterLoop = copyVariableIndices();
+	auto indicesAfterLoop = m_context.copyVariableIndices();
 	// We reset the execution to before the loop
 	// and visit the condition.
 	resetVariableIndices(indicesBeforeLoop);
@@ -318,7 +326,7 @@ bool SMTChecker::visit(ForStatement const& _node)
 		_node.condition()->accept(*this);
 
 	auto forCondition = _node.condition() ? expr(*_node.condition()) : smt::Expression(true);
-	mergeVariables(touchedVars, forCondition, indicesAfterLoop, copyVariableIndices());
+	mergeVariables(touchedVars, forCondition, indicesAfterLoop, m_context.copyVariableIndices());
 
 	m_loopExecutionHappened = true;
 	return false;
@@ -706,6 +714,9 @@ void SMTChecker::endVisit(FunctionCall const& _funCall)
 
 void SMTChecker::visitAssert(FunctionCall const& _funCall)
 {
+	m_context.saveIndicesAtStatement(&_funCall);
+	auto portfolio = dynamic_cast<smt::SMTPortfolio*>(m_interface.get());
+	m_context.saveConstraintsAtStatement(&_funCall, portfolio->assertion());
 	auto const& args = _funCall.arguments();
 	solAssert(args.size() == 1, "");
 	solAssert(args[0]->annotation().type->category() == Type::Category::Bool, "");
@@ -1293,13 +1304,13 @@ void SMTChecker::booleanOperation(BinaryOperation const& _op)
 		if (_op.getOperator() == Token::And)
 		{
 			auto indicesAfterSecond = visitBranch(&_op.rightExpression(), expr(_op.leftExpression()));
-			mergeVariables(touchedVariables(_op.rightExpression()), !expr(_op.leftExpression()), copyVariableIndices(), indicesAfterSecond);
+			mergeVariables(touchedVariables(_op.rightExpression()), !expr(_op.leftExpression()), m_context.copyVariableIndices(), indicesAfterSecond);
 			defineExpr(_op, expr(_op.leftExpression()) && expr(_op.rightExpression()));
 		}
 		else
 		{
 			auto indicesAfterSecond = visitBranch(&_op.rightExpression(), !expr(_op.leftExpression()));
-			mergeVariables(touchedVariables(_op.rightExpression()), expr(_op.leftExpression()), copyVariableIndices(), indicesAfterSecond);
+			mergeVariables(touchedVariables(_op.rightExpression()), expr(_op.leftExpression()), m_context.copyVariableIndices(), indicesAfterSecond);
 			defineExpr(_op, expr(_op.leftExpression()) || expr(_op.rightExpression()));
 		}
 	}
@@ -1398,20 +1409,20 @@ void SMTChecker::assignment(VariableDeclaration const& _variable, smt::Expressio
 	m_interface->addAssertion(m_context.newValue(_variable) == _value);
 }
 
-SMTChecker::VariableIndices SMTChecker::visitBranch(ASTNode const* _statement, smt::Expression _condition)
+smt::EncodingContext::VariableIndices SMTChecker::visitBranch(ASTNode const* _statement, smt::Expression _condition)
 {
 	return visitBranch(_statement, &_condition);
 }
 
-SMTChecker::VariableIndices SMTChecker::visitBranch(ASTNode const* _statement, smt::Expression const* _condition)
+smt::EncodingContext::VariableIndices SMTChecker::visitBranch(ASTNode const* _statement, smt::Expression const* _condition)
 {
-	auto indicesBeforeBranch = copyVariableIndices();
+	auto indicesBeforeBranch = m_context.copyVariableIndices();
 	if (_condition)
 		pushPathCondition(*_condition);
 	_statement->accept(*this);
 	if (_condition)
 		popPathCondition();
-	auto indicesAfterBranch = copyVariableIndices();
+	auto indicesAfterBranch = m_context.copyVariableIndices();
 	resetVariableIndices(indicesBeforeBranch);
 	return indicesAfterBranch;
 }
@@ -1688,7 +1699,7 @@ TypePointer SMTChecker::typeWithoutPointer(TypePointer const& _type)
 	return _type;
 }
 
-void SMTChecker::mergeVariables(set<VariableDeclaration const*> const& _variables, smt::Expression const& _condition, VariableIndices const& _indicesEndTrue, VariableIndices const& _indicesEndFalse)
+void SMTChecker::mergeVariables(set<VariableDeclaration const*> const& _variables, smt::Expression const& _condition, smt::EncodingContext::VariableIndices const& _indicesEndTrue, smt::EncodingContext::VariableIndices const& _indicesEndFalse)
 {
 	auto cmp = [] (VariableDeclaration const* var1, VariableDeclaration const* var2) {
 		return var1->id() < var2->id();
@@ -1830,18 +1841,11 @@ bool SMTChecker::visitedFunction(FunctionDefinition const* _funDef)
 	return false;
 }
 
-SMTChecker::VariableIndices SMTChecker::copyVariableIndices()
-{
-	VariableIndices indices;
-	for (auto const& var: m_context.variables())
-		indices.emplace(var.first, var.second->index());
-	return indices;
-}
-
-void SMTChecker::resetVariableIndices(VariableIndices const& _indices)
+void SMTChecker::resetVariableIndices(smt::EncodingContext::VariableIndices const& _indices)
 {
 	for (auto const& var: _indices)
-		m_context.variable(*var.first)->index() = var.second;
+		if (auto varDecl = dynamic_cast<VariableDeclaration const*>(var.first))
+			m_context.variable(*varDecl)->index() = var.second;
 }
 
 FunctionDefinition const* SMTChecker::inlinedFunctionCallToDefinition(FunctionCall const& _funCall)

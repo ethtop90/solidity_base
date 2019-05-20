@@ -154,14 +154,11 @@ private:
 	/// Computes the right hand side of a compound assignment.
 	smt::Expression compoundAssignment(Assignment const& _assignment);
 
-	/// Maps a variable to an SSA index.
-	using VariableIndices = std::unordered_map<VariableDeclaration const*, int>;
-
 	/// Visits the branch given by the statement, pushes and pops the current path conditions.
 	/// @param _condition if present, asserts that this condition is true within the branch.
 	/// @returns the variable indices after visiting the branch.
-	VariableIndices visitBranch(ASTNode const* _statement, smt::Expression const* _condition = nullptr);
-	VariableIndices visitBranch(ASTNode const* _statement, smt::Expression _condition);
+	smt::EncodingContext::VariableIndices visitBranch(ASTNode const* _statement, smt::Expression const* _condition = nullptr);
+	smt::EncodingContext::VariableIndices visitBranch(ASTNode const* _statement, smt::Expression _condition);
 
 	/// Check that a condition can be satisfied.
 	void checkCondition(
@@ -225,7 +222,7 @@ private:
 	/// Given two different branches and the touched variables,
 	/// merge the touched variables into after-branch ite variables
 	/// using the branch condition as guard.
-	void mergeVariables(std::set<VariableDeclaration const*> const& _variables, smt::Expression const& _condition, VariableIndices const& _indicesEndTrue, VariableIndices const& _indicesEndFalse);
+	void mergeVariables(std::set<VariableDeclaration const*> const& _variables, smt::Expression const& _condition, smt::EncodingContext::VariableIndices const& _indicesEndTrue, smt::EncodingContext::VariableIndices const& _indicesEndFalse);
 	/// Tries to create an uninitialized variable and returns true on success.
 	bool createVariable(VariableDeclaration const& _varDecl);
 
@@ -259,10 +256,8 @@ private:
 	/// Add to the solver: the given expression implied by the current path conditions
 	void addPathImpliedExpression(smt::Expression const& _e);
 
-	/// Copy the SSA indices of m_variables.
-	VariableIndices copyVariableIndices();
 	/// Resets the variable indices.
-	void resetVariableIndices(VariableIndices const& _indices);
+	void resetVariableIndices(smt::EncodingContext::VariableIndices const& _indices);
 
 	/// @returns variables that are touched in _node's subtree.
 	std::set<VariableDeclaration const*> touchedVariables(ASTNode const& _node);

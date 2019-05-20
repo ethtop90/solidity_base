@@ -37,8 +37,8 @@ EncodingContext::EncodingContext(SolverInterface& _solver):
 void EncodingContext::reset()
 {
 	resetAllVariables();
-	m_expressions.clear();
-	m_globalContext.clear();
+	//m_expressions.clear();
+	//m_globalContext.clear();
 	m_thisAddress->increaseIndex();
 	m_balances->increaseIndex();
 }
@@ -174,6 +174,64 @@ bool EncodingContext::createGlobalSymbol(string const& _name, solidity::Expressi
 bool EncodingContext::knownGlobalSymbol(string const& _var) const
 {
 	return m_globalContext.count(_var);
+}
+
+// SSA indices
+
+EncodingContext::VariableIndices EncodingContext::copyVariableIndices() const
+{
+	VariableIndices indices;
+	for (auto const& var: m_variables)
+		indices.emplace(var.first, var.second->index());
+	for (auto const& expr: m_expressions)
+		indices.emplace(expr.first, expr.second->index());
+	return indices;
+}
+
+void EncodingContext::saveIndicesBeforeBlock(ASTNode const* _block)
+{
+	solAssert(!m_indicesBeforeBlock.count(_block), "");
+	m_indicesBeforeBlock[_block] = copyVariableIndices();
+}
+
+void EncodingContext::saveIndicesAfterBlock(ASTNode const* _block)
+{
+	solAssert(!m_indicesAfterBlock.count(_block), "");
+	m_indicesAfterBlock[_block] = copyVariableIndices();
+}
+
+void EncodingContext::saveIndicesAtStatement(ASTNode const* _block)
+{
+	solAssert(!m_indicesAtStatement.count(_block), "");
+	m_indicesAtStatement[_block] = copyVariableIndices();
+}
+
+EncodingContext::VariableIndices const& EncodingContext::indicesBeforeBlock(ASTNode const* _block) const
+{
+	return m_indicesBeforeBlock.at(_block);
+}
+
+EncodingContext::VariableIndices const& EncodingContext::indicesAfterBlock(ASTNode const* _block) const
+{
+	return m_indicesAfterBlock.at(_block);
+}
+
+EncodingContext::VariableIndices const& EncodingContext::indicesAtStatement(ASTNode const* _block) const
+{
+	return m_indicesAtStatement.at(_block);
+}
+
+// Solver
+
+void EncodingContext::saveConstraintsAtStatement(ASTNode const* _block, Expression const& _constraints)
+{
+	solAssert(!m_constraintsAtStatement.count(_block), "");
+	m_constraintsAtStatement.insert({_block, _constraints});
+}
+
+Expression const& EncodingContext::constraintsAtStatement(ASTNode const* _block)
+{
+	return m_constraintsAtStatement.at(_block);
 }
 
 // Blockchain

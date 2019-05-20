@@ -101,6 +101,26 @@ public:
 	bool knownGlobalSymbol(std::string const& _var) const;
 	//@}
 
+	/// Methods related to SSA.
+	//@{
+	/// Maps a symbolic variable to an SSA index.
+	using VariableIndices = std::unordered_map<ASTNode const*, int>;
+	/// Copy the SSA indices of m_variables.
+	VariableIndices copyVariableIndices() const;
+	void saveIndicesBeforeBlock(ASTNode const* _block);
+	void saveIndicesAfterBlock(ASTNode const* _block);
+	void saveIndicesAtStatement(ASTNode const* _block);
+	VariableIndices const& indicesBeforeBlock(ASTNode const* _block) const;
+	VariableIndices const& indicesAfterBlock(ASTNode const* _block) const;
+	VariableIndices const& indicesAtStatement(ASTNode const* _block) const;
+	//@}
+
+	/// Methods related to the solver.
+	//@{
+	void saveConstraintsAtStatement(ASTNode const* _block, Expression const& _constraints);
+	Expression const& constraintsAtStatement(ASTNode const* _block);
+	//@}
+
 	/// Blockchain related methods.
 	//@{
 	/// Value of `this` address.
@@ -128,6 +148,14 @@ private:
 	/// Symbolic representation of global symbols including
 	/// variables and functions.
 	std::unordered_map<std::string, std::shared_ptr<smt::SymbolicVariable>> m_globalContext;
+
+	/// SSA indices at specific breakpoints.
+	std::unordered_map<ASTNode const*, VariableIndices> m_indicesBeforeBlock;
+	std::unordered_map<ASTNode const*, VariableIndices> m_indicesAfterBlock;
+	std::unordered_map<ASTNode const*, VariableIndices> m_indicesAtStatement;
+
+	/// Constraints at specific breakpoints.
+	std::unordered_map<ASTNode const*, Expression> m_constraintsAtStatement;
 
 	/// Symbolic `this` address.
 	std::unique_ptr<SymbolicAddressVariable> m_thisAddress;
