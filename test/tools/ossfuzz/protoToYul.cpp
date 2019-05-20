@@ -663,13 +663,21 @@ void ProtoConverter::visit(StoreFunc const& _x)
 void ProtoConverter::visit(ForStmt const& _x)
 {
 	m_output << "for ";
-	m_inForInitScope.push(true);
 	visit(_x.for_init());
-	m_inForInitScope.pop();
 	visit(_x.for_cond());
-	m_inForPostScope.push(true);
 	visit(_x.for_post());
-	m_inForPostScope.pop();
+	m_inForBodyScope.push(true);
+	visit(_x.for_body());
+	m_inForBodyScope.pop();
+}
+
+void ProtoConverter::visit(BoundedForStmt const& _x)
+{
+	// Boilerplate for loop that limits the number of iterations to a maximum of 4.
+	std::string loopVarName("i_" + std::to_string(m_numNestedForLoops++));
+	m_output << "for { let " << loopVarName << " := 0 } "
+	       << "lt(" << loopVarName << ", 0x60) "
+	       << "{ " << loopVarName << " := add(" << loopVarName << ", 0x20) } ";
 	m_inForBodyScope.push(true);
 	visit(_x.for_body());
 	m_inForBodyScope.pop();
@@ -708,6 +716,9 @@ void ProtoConverter::visit(ForInitStatement const& _x)
 		break;
 	case ForInitStatement::kForstmt:
 		visit(_x.forstmt());
+		break;
+	case ForInitStatement::kBoundedforstmt:
+		visit(_x.boundedforstmt());
 		break;
 	case ForInitStatement::kSwitchstmt:
 		visit(_x.switchstmt());
@@ -772,6 +783,9 @@ void ProtoConverter::visit(ForPostStatement const& _x)
 		break;
 	case ForPostStatement::kForstmt:
 		visit(_x.forstmt());
+		break;
+	case ForPostStatement::kBoundedforstmt:
+		visit(_x.boundedforstmt());
 		break;
 	case ForPostStatement::kSwitchstmt:
 		visit(_x.switchstmt());
@@ -910,15 +924,18 @@ void ProtoConverter::visit(Statement const& _x)
 	case Statement::kForstmt:
 		visit(_x.forstmt());
 		break;
+	case Statement::kBoundedforstmt:
+		visit(_x.boundedforstmt());
+		break;
 	case Statement::kSwitchstmt:
 		visit(_x.switchstmt());
 		break;
 	case Statement::kBreakstmt:
-		if (m_inForBodyScope.top() && !m_inForInitScope.top() && !m_inForPostScope.top())
+		if (m_inForBodyScope.top())
 			m_output << "break\n";
 		break;
 	case Statement::kContstmt:
-		if (m_inForBodyScope.top() && !m_inForInitScope.top() && !m_inForPostScope.top())
+		if (m_inForBodyScope.top())
 			m_output << "continue\n";
 		break;
 	case Statement::kLogFunc:

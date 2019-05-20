@@ -256,6 +256,10 @@ message IfStmt {
   required Block if_body = 2;
 }
 
+message BoundedForStmt {
+  required Block for_body = 1;
+}
+
 message ForStmt {
   required Block for_body = 1;
   required ForInitBlock for_init = 2;
@@ -324,6 +328,7 @@ message ForInitStatement {
     TerminatingStmt     terminatestmt = 10;
     FunctionCallNoReturnVal funccall  = 11;
     MultiAssignment     multiassign   = 12;
+    BoundedForStmt      boundedforstmt = 13;
   }
 }
 
@@ -345,6 +350,7 @@ message ForPostStatement {
     ExtCodeCopy         extcode_copy  = 10;
     TerminatingStmt     terminatestmt = 11;
     FunctionCall        functioncall  = 12;
+    BoundedForStmt      boundedforstmt = 13;
   }
 }
 
@@ -369,6 +375,7 @@ message Statement {
     ExtCodeCopy         extcode_copy    = 12;
     TerminatingStmt     terminatestmt   = 13;
     FunctionCall        functioncall    = 14;
+    BoundedForStmt      boundedforstmt  = 15;
   }
 }
 
