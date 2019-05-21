@@ -448,9 +448,15 @@ jobs:
           name: Install build dependencies
           command: |
             apt-get -qq update
-            apt-get -qy install clang-7 cmake libboost-regex-dev libboost-filesystem-dev libboost-test-dev libboost-system-dev libboost-program-options-dev libcvc4-dev libbz2-dev ninja-build zlib1g-dev libjsoncpp-dev=1.7.4-\*
+            apt-get -qy install wget clang-7 libboost-regex-dev libboost-filesystem-dev libboost-test-dev libboost-system-dev libboost-program-options-dev libcvc4-dev libbz2-dev ninja-build zlib1g-dev libjsoncpp-dev=1.7.4-\*
+            # evmone requires cmake version >= 3.13
+            wget -O /tmp/install_cmake_3.14.4.sh https://github.com/Kitware/CMake/releases/download/v3.14.4/cmake-3.14.4-Linux-x86_64.sh
+            chmod +x /tmp/install_cmake_3.14.4.sh
+            /tmp/install_cmake_3.14.4.sh --skip-license --prefix=/usr/local
             ./scripts/install_lpm.sh
             ./scripts/install_libfuzzer.sh
+            # Install evmone and dependencies (intx and ethash)
+            ./scripts/install_evmone.sh
       - run: *setup_prerelease_commit_hash
       - run: *run_build_ossfuzz
       - persist_to_workspace: *ossfuzz_artifacts
