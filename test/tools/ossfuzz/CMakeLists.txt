@@ -12,6 +12,9 @@ add_dependencies(ossfuzz
 add_custom_target(ossfuzz_proto)
 add_dependencies(ossfuzz_proto yul_proto_ossfuzz yul_proto_diff_ossfuzz)
 
+add_custom_target(ossfuzz_abiv2)
+add_dependencies(ossfuzz_abiv2 abiv2_ossfuzz)
+
 #[[FuzzingEngine.a is provided by oss-fuzz's Dockerized build environment]]
 add_executable(solc_opt_ossfuzz solc_opt_ossfuzz.cpp ../fuzzer_common.cpp)
 target_link_libraries(solc_opt_ossfuzz PRIVATE libsolc evmasm FuzzingEngine.a)
@@ -46,4 +49,8 @@ target_link_libraries(yul_proto_diff_ossfuzz PRIVATE yul evmasm
         protobuf-mutator-libfuzzer.a
         protobuf-mutator.a
         protobuf.a
+        FuzzingEngine.a)
+
+add_executable(abiv2_ossfuzz abiV2FuzzerCommon.cpp abiV2Fuzzer.cpp)
+target_link_libraries(abiv2_ossfuzz PRIVATE solidity evmasm
         FuzzingEngine.a)
